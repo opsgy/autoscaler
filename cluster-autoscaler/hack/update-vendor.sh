@@ -113,17 +113,18 @@ set +o errexit
   USED_GO_VERSION=$(go version |sed 's/.*go\([0-9]\+\.[0-9]\+\).*/\1/')
 
 
-  if [[ "${REQUIRED_GO_VERSION}" != "${USED_GO_VERSION}" ]];then
-    if [[ "${OVERRIDE_GO_VERSION}" == "false" ]]; then
-      err_rerun "Invalid go version ${USED_GO_VERSION}; required go version is ${REQUIRED_GO_VERSION}."
-    else
-      echo "Overriding go version found in go.mod file. Expected go version ${REQUIRED_GO_VERSION}, using ${USED_GO_VERSION}"
-    fi
-  fi
+  # if [[ "${REQUIRED_GO_VERSION}" != "${USED_GO_VERSION}" ]];then
+  #   if [[ "${OVERRIDE_GO_VERSION}" == "false" ]]; then
+  #     err_rerun "Invalid go version ${USED_GO_VERSION}; required go version is ${REQUIRED_GO_VERSION}."
+  #   else
+  #     echo "Overriding go version found in go.mod file. Expected go version ${REQUIRED_GO_VERSION}, using ${USED_GO_VERSION}"
+  #   fi
+  # fi
 
   # Fix module name and staging modules links
-  sed -i "s#module k8s.io/kubernetes#module ${TARGET_MODULE}#" go.mod
-  sed -i "s#\\./staging#${K8S_REPO}/staging#" go.mod
+  sed -i.bak "s#module k8s.io/kubernetes#module ${TARGET_MODULE}#" go.mod
+  sed -i.bak "s#\\./staging#${K8S_REPO}/staging#" go.mod
+  rm -f go.mod.bak
 
   function list_dependencies() {
     local_tmp_dir=$(mktemp -d "${WORK_DIR}/list_dependencies.XXXX")
@@ -160,10 +161,10 @@ set +o errexit
   # Add dependencies from go.mod-extra to go.mod
   # Propagate require entries to both require and replace
   for go_mod_extra in ${GO_MOD_EXTRA_FILES}; do
-    go mod edit -json ${go_mod_extra} | jq -r '.Require[]? | "-require \(.Path)@\(.Version)"' | xargs -t -r go mod edit >&${BASH_XTRACEFD} 2>&1
-    go mod edit -json ${go_mod_extra} | jq -r '.Require[]? | "-replace \(.Path)=\(.Path)@\(.Version)"' | xargs -t -r go mod edit >&${BASH_XTRACEFD} 2>&1
+    go mod edit -json ${go_mod_extra} | jq -r '.Require[]? | "-require \(.Path)@\(.Version)"' | xargs -t go mod edit >&${BASH_XTRACEFD} 2>&1
+    go mod edit -json ${go_mod_extra} | jq -r '.Require[]? | "-replace \(.Path)=\(.Path)@\(.Version)"' | xargs -t go mod edit >&${BASH_XTRACEFD} 2>&1
     # And add explicit replace entries
-    go mod edit -json ${go_mod_extra} | jq -r '.Replace[]? | "-replace \(.Old.Path)=\(.New.Path)@\(.New.Version)"' | sed "s/@null//g" |xargs -t -r go mod edit >&${BASH_XTRACEFD} 2>&1
+    go mod edit -json ${go_mod_extra} | jq -r '.Replace[]? | "-replace \(.Old.Path)=\(.New.Path)@\(.New.Version)"' | sed "s/@null//g" |xargs -t go mod edit >&${BASH_XTRACEFD} 2>&1
   done
   # Add k8s.io/kubernetes dependency
   go mod edit -require k8s.io/kubernetes@v0.0.0
@@ -212,7 +213,7 @@ set +o errexit
   echo "Operation finished successfully"
   if [[ "$(basename "${WORK_DIR}" | cut -d '.' -f 1)" == "ca-update-vendor" ]];then
     echo "Deleting working directory ${WORK_DIR}"
-    rm -rf ${WORK_DIR}
+    # rm -rf ${WORK_DIR}
   else
     echo "Preserving working directory ${WORK_DIR}"
   fi
