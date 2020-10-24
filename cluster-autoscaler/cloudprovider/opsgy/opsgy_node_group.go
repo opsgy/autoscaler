@@ -176,7 +176,10 @@ func (n *NodeGroup) Nodes() ([]cloudprovider.Instance, error) {
 	//anymore equal to the cache here. We should return a placeholder node for
 	//that. As an example PR check this out:
 	//https://github.com/kubernetes/autoscaler/pull/2235
-	return toInstances(n.nodePool.Status.Vms), nil
+
+	instances := toInstances(n.nodePool.Status.Vms)
+
+	return instances, nil;
 }
 
 // TemplateNodeInfo returns a schedulerframework.NodeInfo structure of an empty

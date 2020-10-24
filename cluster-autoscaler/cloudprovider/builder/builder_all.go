@@ -74,7 +74,7 @@ func buildCloudProvider(opts config.AutoscalingOptions, do cloudprovider.NodeGro
 	case cloudprovider.HuaweicloudProviderName:
 		return huaweicloud.BuildHuaweiCloud(opts, do, rl)
 	case cloudprovider.OpsgyProviderName:
-		return opsgy.BuildOpgy(opts, do, rl)
+		return opsgy.BuildOpsgy(opts, do, rl)
 	case packet.ProviderName:
 		return packet.BuildPacket(opts, do, rl)
 	case clusterapi.ProviderName:

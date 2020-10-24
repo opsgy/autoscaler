@@ -75,6 +75,11 @@ func (d *opsgyCloudProvider) NodeGroups() []cloudprovider.NodeGroup {
 // occurred. Must be implemented.
 func (d *opsgyCloudProvider) NodeGroupForNode(node *apiv1.Node) (cloudprovider.NodeGroup, error) {
 	providerID := node.Spec.ProviderID
+	if providerID == "" {
+		// fallback on annotation
+		providerID = node.ObjectMeta.Annotations["opsgy.com/provider-id"]
+	}
+
 	nodeID := toNodeID(providerID)
 
 	klog.V(5).Infof("checking nodegroup for node ID: %q", nodeID)
@@ -162,7 +167,7 @@ func (d *opsgyCloudProvider) Refresh() error {
 }
 
 // BuildOpsgy builds the Opsgy cloud provider.
-func BuildOpgy(
+func BuildOpsgy(
 	opts config.AutoscalingOptions,
 	do cloudprovider.NodeGroupDiscoveryOptions,
 	rl *cloudprovider.ResourceLimiter,
